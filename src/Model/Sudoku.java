@@ -7,7 +7,7 @@ public class Sudoku {
 
     static final int SIZE = 9; //Size of the board 9x9 cells
     private int[][] board; //internal state of the sudoku
-    private final ReentrantLock lock;
+    private final ReentrantLock lock; //shared resources handling
 
     protected Sudoku() {
         this.board = new int[SIZE][SIZE];
@@ -28,6 +28,7 @@ public class Sudoku {
         return SIZE;
     }
 
+    //check if a cell is empty
     public boolean isCellEmpty(int row, int column) {
         lock.lock();
         try {
@@ -37,6 +38,7 @@ public class Sudoku {
         }
     }
 
+    //set cell value to 0
     public void setEmpty(int row, int column) {
         lock.lock();
         try {
@@ -46,8 +48,11 @@ public class Sudoku {
         }
     }
 
-    //try to insert a value into a board return if successful
+    //try to insert a value into a board return true if successful
     public boolean insert(int row, int column, int value) {
+        if(valueOutOfRange(value)) {
+            return false;
+        }
         lock.lock();
         try {
             if(checkIfValid(row, column, value)) {
@@ -58,7 +63,6 @@ public class Sudoku {
         } finally {
             lock.unlock();
         }
-
     }
 
     //Check if a value can be properly inserted into board
@@ -124,8 +128,9 @@ public class Sudoku {
         //check if sudoku is valid
         for(int row = 0; row < SIZE; row++){
             for(int column = 0; column < SIZE; column++) {
-                //if cell is not empty, and it's current value is not valid
                 int value = array[row][column];
+                //if cell is not empty, and it's current value is not valid
+                //if value is valid insert method writes it into the sudoku's board during condition check
                 if(value != 0 && !sudoku.insert(row,column,value)) {
                     throw new Exception("Sudoku is not valid! Values repeat neither in columns, rows or squares.");
                 }
@@ -139,6 +144,7 @@ public class Sudoku {
         Sudoku sudoku = new Sudoku();
         Random rand = new Random();
         int numberQuantity = rand.nextInt(15) + 5; //between 5 and 20 numbers will be placed randomly
+        //if invalid placement is generated it's ignored
         for(int i = 0; i < numberQuantity; i++) {
             int column = rand.nextInt(9);
             int row = rand.nextInt(9);
@@ -148,6 +154,7 @@ public class Sudoku {
         return sudoku;
     }
 
+    //prints board into console in user-friendly format
     public void printBoard(){
         lock.lock();
         try {
@@ -169,9 +176,14 @@ public class Sudoku {
 
     }
 
+    //get a new sudoku instance with copied board
     public Sudoku copy() {
         Sudoku copy = new Sudoku();
         copy.board = board;
         return copy;
+    }
+
+    private boolean valueOutOfRange(int input) {
+        return input < 1 || input > SIZE;
     }
 }
